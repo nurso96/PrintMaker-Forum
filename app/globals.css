@@ -1,0 +1,445 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* ============================================================================ */
+/* CAD-Inspired Theme Variables */
+/* ============================================================================ */
+
+@layer base {
+  :root {
+    --background: 222 84% 5%;
+    --foreground: 213 31% 91%;
+
+    --muted: 223 47% 11%;
+    --muted-foreground: 215 20% 65%;
+
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20% 65%;
+
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 84% 5%;
+
+    --secondary: 222 47% 11%;
+    --secondary-foreground: 210 40% 98%;
+
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 216 34% 17%;
+
+    --radius: 0.75rem;
+
+    /* CAD-specific variables */
+    --neon-cyan: 180 100% 50%;
+    --neon-green: 120 100% 50%;
+    --neon-purple: 300 76% 72%;
+    --neon-orange: 16 100% 60%;
+    
+    --grid-opacity: 0.1;
+    --glow-intensity: 0.5;
+  }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --ring: 240 5.9% 10%;
+
+    --grid-opacity: 0.05;
+    --glow-intensity: 0.3;
+  }
+}
+
+/* ============================================================================ */
+/* Base Styles */
+/* ============================================================================ */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    position: relative;
+  }
+
+  /* CAD Grid Background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      linear-gradient(rgba(255, 255, 255, var(--grid-opacity)) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, var(--grid-opacity)) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .light body::before {
+    background-image: 
+      linear-gradient(rgba(0, 0, 0, var(--grid-opacity)) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, var(--grid-opacity)) 1px, transparent 1px);
+  }
+}
+
+/* ============================================================================ */
+/* CAD-Inspired Components */
+/* ============================================================================ */
+
+@layer components {
+  /* Neon glow effect */
+  .glow {
+    position: relative;
+  }
+
+  .glow::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: inherit;
+    filter: blur(10px);
+    opacity: var(--glow-intensity);
+    z-index: -1;
+  }
+
+  /* CAD-style borders */
+  .cad-border {
+    position: relative;
+    border: 1px solid hsl(var(--border));
+  }
+
+  .cad-border::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    background: linear-gradient(45deg, transparent, hsl(var(--neon-cyan)) 50%, transparent);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .cad-border:hover::before {
+    opacity: 0.5;
+  }
+
+  /* Holographic effect */
+  .holographic {
+    background: linear-gradient(
+      45deg,
+      hsl(var(--neon-cyan)) 0%,
+      hsl(var(--neon-purple)) 25%,
+      hsl(var(--neon-green)) 50%,
+      hsl(var(--neon-orange)) 75%,
+      hsl(var(--neon-cyan)) 100%
+    );
+    background-size: 400% 400%;
+    animation: holographic 4s ease infinite;
+  }
+
+  @keyframes holographic {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  /* Geometric shapes */
+  .hexagon {
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+  }
+
+  .diamond {
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  }
+
+  /* Scan line animation */
+  .scan-line {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scan-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 255, 255, 0.3),
+      transparent
+    );
+    animation: scan 2s linear infinite;
+  }
+
+  @keyframes scan {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  /* Technical font styling */
+  .tech-font {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.025em;
+  }
+
+  /* Status indicators */
+  .status-online {
+    @apply bg-neon-green;
+    box-shadow: 0 0 10px hsl(var(--neon-green));
+  }
+
+  .status-away {
+    @apply bg-neon-orange;
+    box-shadow: 0 0 10px hsl(var(--neon-orange));
+  }
+
+  .status-offline {
+    @apply bg-muted;
+  }
+
+  /* Forum-specific styling */
+  .thread-card {
+    @apply bg-card border border-border rounded-lg p-4 transition-all duration-300;
+    @apply hover:border-primary/50 hover:shadow-lg;
+  }
+
+  .thread-card:hover {
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--muted)));
+  }
+
+  .category-card {
+    @apply bg-gradient-to-br from-card to-muted border border-border rounded-lg p-6;
+    @apply hover:from-muted hover:to-card transition-all duration-500;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, hsl(var(--neon-cyan)), transparent);
+    animation: category-scan 3s linear infinite;
+  }
+
+  @keyframes category-scan {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  /* Reputation badges */
+  .reputation-badge {
+    @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
+    background: linear-gradient(45deg, hsl(var(--muted)), hsl(var(--accent)));
+    color: hsl(var(--accent-foreground));
+  }
+
+  .reputation-badge.legendary {
+    background: linear-gradient(45deg, hsl(var(--neon-purple)), hsl(var(--neon-cyan)));
+    color: white;
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .reputation-badge.epic {
+    background: linear-gradient(45deg, hsl(var(--neon-orange)), hsl(var(--neon-green)));
+    color: white;
+  }
+
+  .reputation-badge.rare {
+    background: linear-gradient(45deg, hsl(var(--neon-green)), hsl(var(--neon-cyan)));
+    color: white;
+  }
+}
+
+/* ============================================================================ */
+/* Utilities */
+/* ============================================================================ */
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .transform-gpu {
+    transform: translate3d(0, 0, 0);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 2px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
+
+/* ============================================================================ */
+/* Rich Text Editor Styling */
+/* ============================================================================ */
+
+.ProseMirror {
+  @apply focus:outline-none;
+}
+
+.ProseMirror p {
+  @apply mb-3;
+}
+
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  @apply font-bold mb-4 mt-6;
+}
+
+.ProseMirror h1 {
+  @apply text-3xl;
+}
+
+.ProseMirror h2 {
+  @apply text-2xl;
+}
+
+.ProseMirror h3 {
+  @apply text-xl;
+}
+
+.ProseMirror code {
+  @apply bg-muted px-2 py-1 rounded text-sm font-mono;
+}
+
+.ProseMirror pre {
+  @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.ProseMirror pre code {
+  @apply bg-transparent p-0;
+}
+
+.ProseMirror blockquote {
+  @apply border-l-4 border-primary/50 pl-4 italic mb-4;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  @apply pl-6 mb-4;
+}
+
+.ProseMirror li {
+  @apply mb-1;
+}
+
+.ProseMirror a {
+  @apply text-primary hover:underline;
+}
+
+/* ============================================================================ */
+/* Loading Animations */
+/* ============================================================================ */
+
+.loading-dots {
+  display: inline-block;
+}
+
+.loading-dots::after {
+  content: '';
+  animation: loading-dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes loading-dots {
+  0%, 20% {
+    content: '';
+  }
+  40% {
+    content: '.';
+  }
+  60% {
+    content: '..';
+  }
+  80%, 100% {
+    content: '...';
+  }
+}

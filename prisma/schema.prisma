@@ -11,101 +11,18 @@ datasource db {
 }
 
 // ============================================================================
-// User Management & Authentication
+// User Management - References existing users table from main SaaS
 // ============================================================================
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String  @map("user_id")
-  type              String
-  provider          String
-  providerAccountId String  @map("provider_account_id")
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@map("accounts")
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
-
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime? @map("email_verified")
-  image         String?
-  username      String?   @unique
-  bio           String?   @db.Text
-  location      String?
-  website       String?
-  
-  // Forum-specific fields
-  role          UserRole  @default(USER)
-  reputation    Int       @default(0)
-  totalPosts    Int       @default(0) @map("total_posts")
-  totalThreads  Int       @default(0) @map("total_threads")
-  joinedAt      DateTime  @default(now()) @map("joined_at")
-  lastActiveAt  DateTime  @default(now()) @map("last_active_at")
-  isVerified    Boolean   @default(false) @map("is_verified")
-  isBanned      Boolean   @default(false) @map("is_banned")
-  
-  // Premium features
-  isPremium     Boolean   @default(false) @map("is_premium")
-  premiumUntil  DateTime? @map("premium_until")
-  stripeCustomerId String? @map("stripe_customer_id")
-
-  // Relations
-  accounts      Account[]
-  sessions      Session[]
-  posts         Post[]
-  threads       Thread[]
-  reactions     Reaction[]
-  badges        UserBadge[]
-  notifications Notification[]
-  reports       Report[]
-  moderationActions ModerationAction[]
-  bookmarks     Bookmark[]
-
-  @@map("users")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verificationtokens")
-}
-
-enum UserRole {
-  USER
-  MODERATOR
-  ADMIN
-  SUPER_ADMIN
-}
+// Note: This references the existing users table from the main SaaS backend
+// The User model is maintained in the backend database.py file
+// Forum-specific fields have been added to the main User model
 
 // ============================================================================
 // Forum Structure
 // ============================================================================
 
-model Category {
+model ForumCategory {
   id          String   @id @default(cuid())
   name        String   @unique
   slug        String   @unique
@@ -118,13 +35,13 @@ model Category {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  subcategories Subcategory[]
-  threads       Thread[]
+  subcategories ForumSubcategory[]
+  threads       ForumThread[]
 
-  @@map("categories")
+  @@map("forum_categories")
 }
 
-model Subcategory {
+model ForumSubcategory {
   id          String   @id @default(cuid())
   name        String
   slug        String
@@ -140,14 +57,14 @@ model Subcategory {
   categoryId  String   @map("category_id")
   
   // Relations
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  threads     Thread[]
+  category    ForumCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  threads     ForumThread[]
 
   @@unique([categoryId, slug])
-  @@map("subcategories")
+  @@map("forum_subcategories")
 }
 
-model Thread {
+model ForumThread {
   id             String    @id @default(cuid())
   title          String
   slug           String
@@ -161,24 +78,23 @@ model Thread {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  // Foreign Keys
+  // Foreign Keys - References main users table
   authorId       String    @map("author_id")
   categoryId     String    @map("category_id")
   subcategoryId  String?   @map("subcategory_id")
   
   // Relations
-  author         User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  category       Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  subcategory    Subcategory? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
-  posts          Post[]
-  bookmarks      Bookmark[]
-  tags           ThreadTag[]
+  category       ForumCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategory    ForumSubcategory? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  posts          ForumPost[]
+  bookmarks      ForumBookmark[]
+  tags           ForumThreadTag[]
 
   @@unique([categoryId, slug])
-  @@map("threads")
+  @@map("forum_threads")
 }
 
-model Post {
+model ForumPost {
   id        String   @id @default(cuid())
   content   String   @db.Text
   isDeleted Boolean  @default(false) @map("is_deleted")
@@ -187,44 +103,42 @@ model Post {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  // Foreign Keys
+  // Foreign Keys - References main users table
   authorId  String   @map("author_id")
   threadId  String   @map("thread_id")
   parentId  String?  @map("parent_id") // For threaded replies
   
   // Relations
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  parent    Post?    @relation("PostReplies", fields: [parentId], references: [id], onDelete: SetNull)
-  replies   Post[]   @relation("PostReplies")
-  reactions Reaction[]
-  attachments Attachment[]
-  reports   Report[]
+  thread    ForumThread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  parent    ForumPost?    @relation("PostReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies   ForumPost[]   @relation("PostReplies")
+  reactions ForumReaction[]
+  attachments ForumAttachment[]
+  reports   ForumReport[]
 
-  @@map("posts")
+  @@map("forum_posts")
 }
 
 // ============================================================================
 // Interactions & Engagement
 // ============================================================================
 
-model Reaction {
+model ForumReaction {
   id     String      @id @default(cuid())
-  type   ReactionType
+  type   ForumReactionType
   
-  // Foreign Keys
+  // Foreign Keys - References main users table
   userId String      @map("user_id")
   postId String      @map("post_id")
   
   // Relations
-  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post   Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post   ForumPost        @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
-  @@map("reactions")
+  @@map("forum_reactions")
 }
 
-enum ReactionType {
+enum ForumReactionType {
   LIKE
   LOVE
   LAUGH
@@ -234,23 +148,22 @@ enum ReactionType {
   UNHELPFUL
 }
 
-model Bookmark {
+model ForumBookmark {
   id       String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
   
-  // Foreign Keys
+  // Foreign Keys - References main users table
   userId   String   @map("user_id")
   threadId String   @map("thread_id")
   
   // Relations
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  thread   Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  thread   ForumThread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@unique([userId, threadId])
-  @@map("bookmarks")
+  @@map("forum_bookmarks")
 }
 
-model Tag {
+model ForumTag {
   id          String   @id @default(cuid())
   name        String   @unique
   slug        String   @unique
@@ -260,46 +173,46 @@ model Tag {
   createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
-  threads     ThreadTag[]
+  threads     ForumThreadTag[]
 
-  @@map("tags")
+  @@map("forum_tags")
 }
 
-model ThreadTag {
+model ForumThreadTag {
   // Foreign Keys
   threadId String @map("thread_id")
   tagId    String @map("tag_id")
   
   // Relations
-  thread   Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  thread   ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  tag      ForumTag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([threadId, tagId])
-  @@map("thread_tags")
+  @@map("forum_thread_tags")
 }
 
 // ============================================================================
-// User Progression & Gamification
+// User Progression & Gamification - References main users table
 // ============================================================================
 
-model Badge {
+model ForumBadge {
   id          String   @id @default(cuid())
   name        String   @unique
   description String   @db.Text
   icon        String   // Icon/emoji
   color       String   // Hex color
-  rarity      BadgeRarity @default(COMMON)
+  rarity      ForumBadgeRarity @default(COMMON)
   criteria    String   @db.Text // Description of how to earn it
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
 
   // Relations
-  users       UserBadge[]
+  users       ForumUserBadge[]
 
-  @@map("badges")
+  @@map("forum_badges")
 }
 
-enum BadgeRarity {
+enum ForumBadgeRarity {
   COMMON
   UNCOMMON
   RARE
@@ -307,49 +220,46 @@ enum BadgeRarity {
   LEGENDARY
 }
 
-model UserBadge {
+model ForumUserBadge {
   id        String   @id @default(cuid())
   earnedAt  DateTime @default(now()) @map("earned_at")
   isVisible Boolean  @default(true) @map("is_visible")
   
-  // Foreign Keys
+  // Foreign Keys - References main users table
   userId    String   @map("user_id")
   badgeId   String   @map("badge_id")
   
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  badge     ForumBadge     @relation(fields: [badgeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, badgeId])
-  @@map("user_badges")
+  @@map("forum_user_badges")
 }
 
 // ============================================================================
-// Moderation & Reports
+// Moderation & Reports - References main users table
 // ============================================================================
 
-model Report {
+model ForumReport {
   id        String      @id @default(cuid())
-  reason    ReportReason
+  reason    ForumReportReason
   description String?   @db.Text
-  status    ReportStatus @default(PENDING)
+  status    ForumReportStatus @default(PENDING)
   createdAt DateTime    @default(now()) @map("created_at")
   resolvedAt DateTime?  @map("resolved_at")
 
-  // Foreign Keys
+  // Foreign Keys - References main users table
   reporterId String     @map("reporter_id")
   postId     String?    @map("post_id")
   resolverId String?    @map("resolver_id")
   
   // Relations
-  reporter   User       @relation(fields: [reporterId], references: [id], onDelete: Cascade)
-  post       Post?      @relation(fields: [postId], references: [id], onDelete: SetNull)
-  resolver   User?      @relation(fields: [resolverId], references: [id], onDelete: SetNull)
+  post       ForumPost?      @relation(fields: [postId], references: [id], onDelete: SetNull)
 
-  @@map("reports")
+  @@map("forum_reports")
 }
 
-enum ReportReason {
+enum ForumReportReason {
   SPAM
   HARASSMENT
   INAPPROPRIATE_CONTENT
@@ -358,33 +268,29 @@ enum ReportReason {
   OTHER
 }
 
-enum ReportStatus {
+enum ForumReportStatus {
   PENDING
   REVIEWED
   RESOLVED
   DISMISSED
 }
 
-model ModerationAction {
+model ForumModerationAction {
   id        String           @id @default(cuid())
-  action    ModerationActionType
+  action    ForumModerationActionType
   reason    String?          @db.Text
   duration  Int?             // In hours for temporary actions
   createdAt DateTime         @default(now()) @map("created_at")
   expiresAt DateTime?        @map("expires_at")
 
-  // Foreign Keys
+  // Foreign Keys - References main users table
   moderatorId String         @map("moderator_id")
   targetUserId String        @map("target_user_id")
-  
-  // Relations
-  moderator   User           @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
-  targetUser  User           @relation(fields: [targetUserId], references: [id], onDelete: Cascade)
 
-  @@map("moderation_actions")
+  @@map("forum_moderation_actions")
 }
 
-enum ModerationActionType {
+enum ForumModerationActionType {
   WARNING
   MUTE
   TEMPORARY_BAN
@@ -394,28 +300,25 @@ enum ModerationActionType {
 }
 
 // ============================================================================
-// Notifications & Communication
+// Notifications & Communication - References main users table
 // ============================================================================
 
-model Notification {
+model ForumNotification {
   id        String           @id @default(cuid())
   title     String
   message   String           @db.Text
-  type      NotificationType
+  type      ForumNotificationType
   isRead    Boolean          @default(false) @map("is_read")
   data      Json?            // Additional data for the notification
   createdAt DateTime         @default(now()) @map("created_at")
 
-  // Foreign Keys
+  // Foreign Keys - References main users table
   userId    String           @map("user_id")
-  
-  // Relations
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("notifications")
+  @@map("forum_notifications")
 }
 
-enum NotificationType {
+enum ForumNotificationType {
   REPLY
   MENTION
   BADGE_EARNED
@@ -430,7 +333,7 @@ enum NotificationType {
 // File Management
 // ============================================================================
 
-model Attachment {
+model ForumAttachment {
   id        String   @id @default(cuid())
   fileName  String   @map("file_name")
   fileSize  Int      @map("file_size")
@@ -442,7 +345,7 @@ model Attachment {
   postId    String   @map("post_id")
   
   // Relations
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post      ForumPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@map("attachments")
+  @@map("forum_attachments")
 }

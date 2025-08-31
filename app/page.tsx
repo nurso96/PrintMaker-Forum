@@ -13,15 +13,33 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar } from "@/components/ui/avatar"
 import { cn, formatRelativeTime } from "@/lib/utils"
+import { backendAuth } from "@/lib/auth-backend"
 
 export default function HomePage() {
-  // Mock data - replace with real API calls
-  const forumStats = {
-    totalMembers: 12847,
-    totalThreads: 3421,
-    totalPosts: 28935,
-    onlineNow: 147
-  }
+  const [forumStats, setForumStats] = React.useState({
+    total_users: 0,
+    total_threads: 0,
+    total_posts: 0,
+    active_users_24h: 0
+  })
+  const [loading, setLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    const loadForumStats = async () => {
+      try {
+        const stats = await backendAuth.getForumStats()
+        if (stats) {
+          setForumStats(stats)
+        }
+      } catch (error) {
+        console.error('Failed to load forum stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadForumStats()
+  }, [])
 
   const categories = [
     {
@@ -152,27 +170,31 @@ export default function HomePage() {
       <div className="mb-12 grid grid-cols-2 gap-6 md:grid-cols-4">
         <StatCard 
           label="Members" 
-          value={forumStats.totalMembers} 
+          value={loading ? 0 : forumStats.total_users} 
           icon={<Users className="h-5 w-5" />}
           color="text-neon-cyan" 
+          loading={loading}
         />
         <StatCard 
           label="Threads" 
-          value={forumStats.totalThreads} 
+          value={loading ? 0 : forumStats.total_threads} 
           icon={<MessageSquare className="h-5 w-5" />}
           color="text-neon-green" 
+          loading={loading}
         />
         <StatCard 
           label="Posts" 
-          value={forumStats.totalPosts} 
+          value={loading ? 0 : forumStats.total_posts} 
           icon={<Eye className="h-5 w-5" />}
           color="text-neon-purple" 
+          loading={loading}
         />
         <StatCard 
-          label="Online Now" 
-          value={forumStats.onlineNow} 
+          label="Online Today" 
+          value={loading ? 0 : forumStats.active_users_24h} 
           icon={<div className="h-2 w-2 rounded-full bg-neon-green animate-pulse" />}
           color="text-neon-green" 
+          loading={loading}
         />
       </div>
 
@@ -247,9 +269,10 @@ interface StatCardProps {
   value: number
   icon: React.ReactNode
   color?: string
+  loading?: boolean
 }
 
-function StatCard({ label, value, icon, color = "text-foreground" }: StatCardProps) {
+function StatCard({ label, value, icon, color = "text-foreground", loading = false }: StatCardProps) {
   return (
     <Card className="cad-border hover:shadow-lg transition-all duration-300">
       <CardContent className="p-6">
@@ -257,7 +280,11 @@ function StatCard({ label, value, icon, color = "text-foreground" }: StatCardPro
           <div>
             <p className="text-sm text-muted-foreground">{label}</p>
             <p className={cn("text-2xl font-bold", color)}>
-              {value.toLocaleString()}
+              {loading ? (
+                <span className="animate-pulse bg-muted rounded w-16 h-6 inline-block" />
+              ) : (
+                value.toLocaleString()
+              )}
             </p>
           </div>
           <div className={color}>{icon}</div>

@@ -1,0 +1,53 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+startCommand = "npm start"
+
+[env]
+NODE_ENV = "production"
+PORT = "3000"
+
+# Backend Integration - Connect to PrintMaker-Backend
+NEXT_PUBLIC_API_URL = "https://backend-production-edad.up.railway.app"
+BACKEND_URL = "https://backend-production-edad.up.railway.app"
+
+# Main SaaS App Integration
+NEXT_PUBLIC_MAIN_APP_URL = "https://printmakerai.com"
+
+# Authentication - Must match backend JWT secret
+JWT_SECRET_KEY = "${{ JWT_SECRET_KEY }}"
+NEXTAUTH_URL = "https://forum-production.up.railway.app"
+NEXTAUTH_SECRET = "${{ NEXTAUTH_SECRET }}"
+
+# Database - Uses same PostgreSQL as backend for consistency
+DATABASE_URL = "${{ RAILWAY_POSTGRES_URL }}"
+
+# OAuth Providers (same as main app)
+GOOGLE_CLIENT_ID = "${{ GOOGLE_CLIENT_ID }}"
+GOOGLE_CLIENT_SECRET = "${{ GOOGLE_CLIENT_SECRET }}"
+GITHUB_CLIENT_ID = "${{ GITHUB_CLIENT_ID }}"
+GITHUB_CLIENT_SECRET = "${{ GITHUB_CLIENT_SECRET }}"
+
+# Email Configuration
+EMAIL_SERVER_USER = "${{ EMAIL_SERVER_USER }}"
+EMAIL_SERVER_PASSWORD = "${{ EMAIL_SERVER_PASSWORD }}"
+EMAIL_SERVER_HOST = "${{ EMAIL_SERVER_HOST }}"
+EMAIL_SERVER_PORT = "${{ EMAIL_SERVER_PORT }}"
+EMAIL_FROM = "${{ EMAIL_FROM }}"
+
+# File Upload
+UPLOADTHING_SECRET = "${{ UPLOADTHING_SECRET }}"
+UPLOADTHING_APP_ID = "${{ UPLOADTHING_APP_ID }}"
+
+# Payment Integration
+STRIPE_SECRET_KEY = "${{ STRIPE_SECRET_KEY }}"
+STRIPE_PUBLISHABLE_KEY = "${{ STRIPE_PUBLISHABLE_KEY }}"
+STRIPE_WEBHOOK_SECRET = "${{ STRIPE_WEBHOOK_SECRET }}"
+
+# Optional: Redis for caching
+REDIS_URL = "${{ REDIS_URL }}"
